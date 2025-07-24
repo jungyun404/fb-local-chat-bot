@@ -2,6 +2,7 @@ const Bot = require('../build');
 const express = require('express');
 const bodyParser = require('body-parser')
 const Promise = require('bluebird');
+const helmet = require('helmet');
 
 const JOKE = "Did you know photons had mass? I didn't even know they were Catholic.";
 const RiddleImageUrl ="http://tinyurl.com/he9tsph";
@@ -164,6 +165,7 @@ function makeServer() {
   });
 
   const app = express();
+  app.use(helmet());
 
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: true}));
