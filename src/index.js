@@ -79,7 +79,9 @@ class Bot extends EventEmitter {
     });
 
     router.post('/', (req, res) => {
-      this.handleMessage(req.body);
+      if (typeof req.body === 'object' && req.body !== null) {
+        this.handleMessage(req.body);
+      }
       res.sendStatus(200);
     });
 
@@ -108,34 +110,38 @@ class Bot extends EventEmitter {
       return;
     }
 
-    data.entry.forEach((entry) => {
-      entry.messaging.forEach((event) => {
-        // handle messages
-        if (event.message) {
-          // Since a message containing a quick_reply can also contain text
-          // and attachment, check for quick_reply first
-          if (event.message.quick_reply) {
-            this.emit('quick_reply', event);
-            return;
-          }
-          if (event.message.text) {
-            this.emit('text', event);
-          } else if (event.message.attachments) {
-            this.emit('attachments', event);
-          }
-        }
+    if (Array.isArray(data.entry)) {
+      data.entry.forEach((entry) => {
+        if (entry.messaging && Array.isArray(entry.messaging)) {
+          entry.messaging.forEach((event) => {
+            // handle messages
+            if (event.message) {
+              // Since a message containing a quick_reply can also contain text
+              // and attachment, check for quick_reply first
+              if (event.message.quick_reply) {
+                this.emit('quick_reply', event);
+                return;
+              }
+              if (event.message.text) {
+                this.emit('text', event);
+              } else if (event.message.attachments) {
+                this.emit('attachments', event);
+              }
+            }
 
-        // handle postback
-        if (event.postback && event.postback.payload) {
-          this.emit('postback', event);
+            // handle postback
+            if (event.postback && event.postback.payload) {
+              this.emit('postback', event);
+            }
+            // Handle authentication
+            if (event.optin && event.optin.ref) {
+              this.emit('optin', event);
+            }
+            // TODO: handle message delivery
+          });
         }
-        // Handle authentication
-        if (event.optin && event.optin.ref) {
-          this.emit('optin', event);
-        }
-        // TODO: handle message delivery
-      })
-    });
+      });
+    }
   }
 
   /**
